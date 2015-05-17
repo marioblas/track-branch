@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Tracks a git remote branch using NotifyOSD for display notificatons of changes.
+
+# Notification icon path
+readonly ICON="${HOME}/.track-branch/git.png"
+
+# Format options for git log
+readonly USER_NAME="%cn"
+readonly HASH="%h"
+readonly SUBJECT="%s"
+readonly MOMENT="%cr"
+
+# Remote branch to track (by default: origin/master)
+if [[ -z $1 ]]; then
+	branch="origin/master"
+else
+	branch=$1
+fi
+
+echo "$(tput setaf 2)Monitoring branch: ${branch} $(tput sgr0)"
+
+# Initial revision hash
+latest_rev="void"
+
+# Infinite loop (need to kill the process)
+while true; do
+
+	# Update our remote-tracking branch (without changing the working copy)
+	# If something went wrong (remote branch doesn't exists...) stop
+	tput setaf 1
+	git fetch ${branch/\// } --quiet
+	if [[ $? != 0 ]]; then
+		exit
+	fi
+	tput sgr0
+
+	# Get the latest revision hash
+	current_rev=`git rev-parse ${branch}`
+
+	# Check if there are new updates
+	if [[ ${latest_rev} != ${current_rev} ]]; then
+
+		# Set our own log output format
+		title=`git log -1 ${current_rev} --pretty=format:"${USER_NAME} commited to ${branch} ${MOMENT}"`
+		message=`git log -1 ${current_rev} --pretty=format:"Commit: ${HASH}\n\nMessage: ${SUBJECT}"`
+
+		# Show notification
+		`notify-send -i ${ICON} "${title}" "${message}"`
+
+		# Update latest revision with the current revision hash
+		latest_rev=${current_rev}
+
+	fi
+
+	# Wait a few seconds
+	sleep 60
+
+done
