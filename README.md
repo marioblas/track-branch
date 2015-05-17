@@ -5,7 +5,6 @@ Simple script for track a git remote branch using [NotifyOSD](https://wiki.ubunt
 ## Install
 
 ```sh
-chmod +x track-branch
 sudo cp track-branch /usr/local/bin
 mkdir $HOME/.track-branch && cp assets/git.png $_
 ```
